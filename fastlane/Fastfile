@@ -1,0 +1,36 @@
+# sh("bundle install")
+platform :android do
+  desc "Build/Generate/Deploy on Google Play"
+  lane :deploy do
+    # Get current Android build
+    current_build = google_play_track_version_codes(track: "internal")[0]
+    # Increment current build
+    ChangeOnFile('../android/app/build.gradle', /versionCode #{current_build}/, "versionCode " + (current_build + 1).to_s)
+    # Install packages
+    sh("npm i -s")
+    # Sync app
+    sh("cd ..; npx ionic cap sync android")
+    # Build/Generate/Sign .aab
+    gradle(
+      project_dir: "android",
+      task: "clean bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => File.expand_path("keystore.json"),
+        "android.injected.signing.store.password" => "123456",
+        "android.injected.signing.key.alias" => "key0",
+        "android.injected.signing.key.password" => "123456"
+      }
+    )
+    upload_to_play_store(
+      aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+      track: "internal"
+    )
+  end
+end
+
+# Find and replace text in file
+def ChangeOnFile(file, regex, value)
+  text = File.read file
+  File.open(file, "w+") { |f| f << text.gsub(regex, value) }
+end
