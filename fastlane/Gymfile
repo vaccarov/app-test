@@ -1,0 +1,12 @@
+export_options({
+   signingStyle: "manual",
+   method: "app-store",
+  #  export_xcargs: "-allowProvisioningUpdates",
+  #  provisioningProfiles: {
+  #    "id": "match AppStore id"
+  #  }
+})
+codesigning_identity("Apple Distribution: X (XXX)")
+workspace("ios/App/App.xcworkspace")
+output_directory("ios/build/")
+output_name("app.ipa")
